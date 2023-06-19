@@ -21,14 +21,16 @@ To disable caching the following was added to index.html files:
 ## start
 
 ```shell
-docker run -p 8000:8000 --rm --name floppybird --env FLOPPY_DISTRO=floppybird -it crowdsalat/floppy:latest
-docker run -p 8000:8000 --rm --name floppybird --env FLOPPY_DISTRO=flappy-docker -it crowdsalat/floppy:latest
-docker run -p 8000:8000 --rm --name floppybird --env FLOPPY_DISTRO=flappydragon -it crowdsalat/floppy:latest
-docker run -p 8000:8000 --rm --name floppybird --env FLOPPY_DISTRO=flappy-math-saga -it crowdsalat/floppy:latest
+docker run -p 8000:8000 --rm --name floppybird --env FLOPPY_DISTRO=floppybird -it crowdsalat/floppybird-demo:latest
+docker run -p 8000:8000 --rm --name floppybird --env FLOPPY_DISTRO=flappy-docker -it crowdsalat/floppybird-demo:latest
+docker run -p 8000:8000 --rm --name floppybird --env FLOPPY_DISTRO=flappydragon -it crowdsalat/floppybird-demo:latest
+docker run -p 8000:8000 --rm --name floppybird --env FLOPPY_DISTRO=flappy-math-saga -it crowdsalat/floppybird-demo:latest
 ```
 
-## localbuild
+## localbuild and push
 
 ```shell
-docker build -t crowdsalat/floppy .
+docker build -t crowdsalat/floppybird-demo .
+docker login 
+docker image push crowdsalat/floppybird-demo:latest
 ```
