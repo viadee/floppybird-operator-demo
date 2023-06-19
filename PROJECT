@@ -7,4 +7,14 @@ layout:
 - go.kubebuilder.io/v4
 projectName: floppybird-operator-demo
 repo: github.com/viadee/floppybird-operator-demo
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: demo.viadee.de
+  group: webapp
+  kind: Floppybird
+  path: github.com/viadee/floppybird-operator-demo/api/v1alpha1
+  version: v1alpha1
 version: "3"

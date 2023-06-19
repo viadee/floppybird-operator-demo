@@ -1,0 +1,12 @@
+apiVersion: webapp.demo.viadee.de/v1alpha1
+kind: Floppybird
+metadata:
+  labels:
+    app.kubernetes.io/name: floppybird
+    app.kubernetes.io/instance: floppybird-sample
+    app.kubernetes.io/part-of: floppybird-operator-demo
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: floppybird-operator-demo
+  name: floppybird-sample
+spec:
+  # TODO(user): Add fields here
