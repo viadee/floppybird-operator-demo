@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <title>Flappy Dragon</title>
+      <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+      <meta name="author" content="Nebez Briefkani" />
+      <meta name="description" content="play flappy dragon. a remake of popular game flappy bird game." />
+      <meta name="keywords" content="flappybird,flappy,bird,dragon,flappydragon,html,html5,css,css3,js,javascript,jquery,gameofthrones,thrones,game,briefkani,open,source,opensource,wikiofthrones" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+
+      <!-- Open Graph tags -->
+      <meta property="og:title" content="Flappy Dragon" />
+      <meta property="og:description" content="Play Flappy Dragon. a remake of popular game flappy bird in dragon style for Game of Thrones. " />
+      <meta property="og:type" content="website" />
+      <meta property="og:image" content="https://github.com/iArunava/flappydragon/raw/master/assets/flappydragon_thumb.png" />
+      <meta property="og:url" content="http://flappydragon.attim.in/" />
+      <meta property="og:site_name" content="Flappy Dragon" />
+
+      <!-- no caching for demo-->>
+      <meta http-equiv="Cache-control" content="no-cache, no-store, must-revalidate">
+      <meta http-equiv="Pragma" content="no-cache">
+      <meta http-equiv="expires" content="0">
+
+      <!-- Style sheets -->
+      <link href="css/reset.css" rel="stylesheet">
+      <link href="css/main.css" rel="stylesheet">
+   </head>
+   <body>
+      <div id="gamecontainer">
+         <div id="gamescreen">
+            <div id="sky" class="animated">
+               <div id="flyarea">
+                  <div id="ceiling" class="animated"></div>
+                  <!-- This is the flying and pipe area container -->
+                  <div id="player" class="bird animated"></div>
+
+                  <div id="bigscore"></div>
+
+                  <div id="splash"></div>
+
+                  <div id="scoreboard">
+                     <div id="medal"></div>
+                     <div id="currentscore"></div>
+                     <div id="highscore"></div>
+                     <!--<div id="replay"><img src="assets/replay.png" alt="replay"></div>-->
+                     <div id="twitter-share-btn" onclick="shareBtnClick(this.id)"><img src="assets/twitter_share_btn.png" alt="replay"></div>
+                     <div id="facebook-share-btn" onclick="shareBtnClick(this.id)"><img src="assets/facebook_share_btn.png" alt="replay"></div>
+                     <div id="reddit-share-btn" onclick="shareBtnClick(this.id)"><img src="assets/reddit_share_btn.png" alt="replay"></div>
+                     <div id="whatsapp-share-btn" onclick="shareBtnClick(this.id)"><img src="assets/whatsapp_share_btn.png" alt="replay"></div>
+                     <div id="linkedin-share-btn" onclick="shareBtnClick(this.id)"><img src="assets/linkedin_share_btn.png" alt="replay"></div>
+                     <div id="replay"><img src="assets/fd_replay.png" alt="replay"></div>
+                     <div id="share"><img src="assets/download.png" alt="share"></div>
+                  </div>
+
+                  <!-- Pipes go here! -->
+               </div>
+            </div>
+            <div id="land" class="animated"><div id="debug"></div></div>
+         </div>
+      </div>
+      <div id="footer">
+         <a href="https://github.com/iArunava/flappydragon#credits">Credits</a>
+      </div>
+      <div class="boundingbox" id="playerbox"></div>
+      <div class="boundingbox" id="pipebox"></div>
+
+      <script src="js/jquery.min.js"></script>
+      <script src="js/jquery.transit.min.js"></script>
+      <script src="js/buzz.min.js"></script>
+      <script src="js/html2canvas.min.js"></script>
+      <script src="js/main.js"></script>
+
+      <script>
+      function inIframe() {
+          try {
+              return window.self !== window.top;
+          } catch (e) {
+              return true;
+          }
+      }
+      if (!inIframe() && window.location.hostname == 'nebezb.com') {
+         window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+         ga('create', 'UA-48047334-1', 'auto');
+         ga('send', 'pageview');
+      }
+      </script>
+      <script async src='https://www.google-analytics.com/analytics.js'></script>
+   </body>
+</html>
