@@ -20,6 +20,7 @@ import (
 	"context"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -65,8 +66,8 @@ func (r *FloppybirdReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	// get number of running pods
 	runningPods, err := r.getListOfPods(ctx, req, operatorResourceLabel)
-	if err != nil {
-		return ctrl.Result{}, client.IgnoreNotFound(err)
+	if client.IgnoreNotFound(err) != nil {
+		return ctrl.Result{}, err
 	}
 
 	// start new pod if no running pods are found
@@ -88,6 +89,31 @@ func (r *FloppybirdReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		logger.Info("Running pods found: " + string(runningPods))
 	}
 
+	// check if servie exsists
+	service := &corev1.Service{}
+	err = r.Client.Get(ctx, req.NamespacedName, service)
+	if client.IgnoreNotFound(err) != nil {
+		return ctrl.Result{}, err
+	}
+
+	// check if service exists
+	if service.Name == "" {
+		// service does not exist, create new service
+		logger.Info("No service found. Creating new service.")
+		service := createService(req, operatorResourceLabel)
+
+		// establish a controller reference between floppybird and service
+		if err := ctrl.SetControllerReference(&floppybird, service, r.Scheme); err != nil {
+			return ctrl.Result{}, err
+		}
+
+		// create in cluster
+		if err := r.Create(ctx, service); err != nil {
+			// Error occurred while creating a new pod, return error
+			return ctrl.Result{}, err
+		}
+	}
+
 	return ctrl.Result{}, nil
 }
 
@@ -105,12 +131,32 @@ func (r *FloppybirdReconciler) createPod(floppybird webappv1alpha1.Floppybird, l
 				Image:           "crowdsalat/floppybird-demo:0.0.4",
 				ImagePullPolicy: "IfNotPresent",
 				Ports: []corev1.ContainerPort{
-					{ContainerPort: 80, Name: "http", Protocol: "TCP"},
+					{ContainerPort: 8000, Name: "http", Protocol: "TCP"},
 				},
 			}},
 		},
 	}
 	return newPod
+}
+
+func createService(req ctrl.Request, label map[string]string) *corev1.Service {
+	// Customize the service creation according to your requirements
+	service := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      req.Name,
+			Namespace: req.Namespace,
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: label,
+			Ports: []corev1.ServicePort{
+				{
+					Port:       80,
+					TargetPort: intstr.FromInt(8000),
+				},
+			},
+		},
+	}
+	return service
 }
 
 func (r *FloppybirdReconciler) getListOfPods(ctx context.Context, req ctrl.Request, operatorResourceLabel map[string]string) (int32, error) {
