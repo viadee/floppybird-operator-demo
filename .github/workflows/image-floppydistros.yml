@@ -22,3 +22,13 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
+
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            public.ecr.aws/m4k8r3n4/viadee-floppybird-demo:latest
+            public.ecr.aws/m4k8r3n4/viadee-floppybird-demo:${{ github.ref_name}}
