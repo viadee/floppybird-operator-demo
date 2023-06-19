@@ -30,5 +30,4 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            public.ecr.aws/viadee/floppybird-demo:latest
-            public.ecr.aws/viadee/floppybird-demo:${{ github.ref_name}}
+            public.ecr.aws/viadee/floppybird-demo
