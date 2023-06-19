@@ -1,10 +1,11 @@
 name: Build floppy bird distro
 
-# run action on change in direcoty hack/floppy-distro-image
+# run action on change in directory hack/floppy-distro-image
 on:
   push:
     paths:
       - "hack/floppy-distro-image/**"
+      - ".github/workflows/image-floppydistros.yml"
 
 jobs:
   build:
