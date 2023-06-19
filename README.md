@@ -8,6 +8,16 @@
 - Access to a Kubernetes v1.11.3+ cluster.
 - k3d (or any other local k8s cluster solution)
 
+## create controller image
+
+```shell
+docker login
+make docker-buildx IMG=crowdsalat/floppybird-operator PLATFORMS=linux/amd64
+make deploy IMG=crowdsalat/floppybird-operator
+
+make undeploy
+```
+
 ## local test
 
 ```shell

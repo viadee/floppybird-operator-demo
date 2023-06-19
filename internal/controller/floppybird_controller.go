@@ -40,6 +40,9 @@ type FloppybirdReconciler struct {
 //+kubebuilder:rbac:groups=webapp.demo.viadee.de,resources=floppybirds,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=webapp.demo.viadee.de,resources=floppybirds/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=webapp.demo.viadee.de,resources=floppybirds/finalizers,verbs=update
+//+kubebuilder:rbac:groups="*",resources=pods,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="*",resources=services,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="*",resources=ingresses,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
