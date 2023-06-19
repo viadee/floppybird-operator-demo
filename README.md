@@ -14,6 +14,11 @@
 # create local cluster
 k3d cluster create local-cluster
 kubectl config use-context k3d-local-cluster
+
+# install CRD
+make install
+
+## launch from vscode "Run and Debug"
 ```
 
 ## project initialization
