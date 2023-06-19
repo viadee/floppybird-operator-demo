@@ -30,7 +30,6 @@ docker run -p 8000:8000 --rm --name floppybird --env FLOPPY_DISTRO=flappy-math-s
 ## localbuild and push
 
 ```shell
-docker build -t crowdsalat/floppybird-demo .
 docker login 
-docker image push crowdsalat/floppybird-demo:latest
+docker-buildx build --platform linux/amd64,linux/arm64 --push -t crowdsalat/floppybird-demo:0.0.4 -t crowdsalat/floppybird-demo:latest .
 ```
