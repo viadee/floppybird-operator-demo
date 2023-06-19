@@ -15,6 +15,9 @@ docker login
 make docker-buildx IMG=crowdsalat/floppybird-operator PLATFORMS=linux/amd64
 make deploy IMG=crowdsalat/floppybird-operator
 
+k apply -f config/samples/webapp_v1alpha1_floppybird.yaml 
+
+k delete -f config/samples/webapp_v1alpha1_floppybird.yaml
 make undeploy
 ```
 
