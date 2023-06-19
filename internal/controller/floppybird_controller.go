@@ -27,6 +27,7 @@ import (
 
 	webappv1alpha1 "github.com/viadee/floppybird-operator-demo/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -96,7 +97,7 @@ func (r *FloppybirdReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
-	// check if service exists
+	// create new service if service does not exit
 	if service.Name == "" {
 		// service does not exist, create new service
 		logger.Info("No service found. Creating new service.")
@@ -109,6 +110,29 @@ func (r *FloppybirdReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 		// create in cluster
 		if err := r.Create(ctx, service); err != nil {
+			// Error occurred while creating a new pod, return error
+			return ctrl.Result{}, err
+		}
+	}
+
+	// check if an ingress exist
+	ingress := &networkingv1.Ingress{}
+	err = r.Get(ctx, req.NamespacedName, ingress)
+	if client.IgnoreNotFound(err) != nil {
+		return ctrl.Result{}, err
+	}
+	// create new ingress if service does not exit
+	if ingress.Name == "" {
+		logger.Info("No ingress found. Creating new ingress.")
+		ingress := createIngress(req)
+
+		// establish a controller reference between floppybird and service
+		if err := ctrl.SetControllerReference(&floppybird, ingress, r.Scheme); err != nil {
+			return ctrl.Result{}, err
+		}
+
+		// create in cluster
+		if err := r.Create(ctx, ingress); err != nil {
 			// Error occurred while creating a new pod, return error
 			return ctrl.Result{}, err
 		}
@@ -159,6 +183,49 @@ func createService(req ctrl.Request, label map[string]string) *corev1.Service {
 	return service
 }
 
+func createIngress(req ctrl.Request) *networkingv1.Ingress {
+	ingress := &networkingv1.Ingress{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      req.Name,
+			Namespace: req.Namespace,
+		},
+		Spec: networkingv1.IngressSpec{
+			Rules: []networkingv1.IngressRule{
+				{
+					Host: "floppybird.cloudland2023operator.viadee.cloud",
+					IngressRuleValue: networkingv1.IngressRuleValue{
+						HTTP: &networkingv1.HTTPIngressRuleValue{
+							Paths: []networkingv1.HTTPIngressPath{
+								{
+									Path:     "/",
+									PathType: func() *networkingv1.PathType { pt := networkingv1.PathTypePrefix; return &pt }(),
+									Backend: networkingv1.IngressBackend{
+										Service: &networkingv1.IngressServiceBackend{
+											Name: req.Name,
+											Port: networkingv1.ServiceBackendPort{
+												Number: 80,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			TLS: []networkingv1.IngressTLS{
+				{
+					Hosts: []string{
+						"floppybird.cloudland2023operator.viadee.cloud",
+					},
+					SecretName: "floppybird-cert-generatedby-cert-manager",
+				},
+			},
+		},
+	}
+	return ingress
+}
+
 func (r *FloppybirdReconciler) getListOfPods(ctx context.Context, req ctrl.Request, operatorResourceLabel map[string]string) (int32, error) {
 	podList := &corev1.PodList{}
 	if err := r.List(ctx, podList, client.InNamespace(req.Namespace), client.MatchingLabels(operatorResourceLabel)); err != nil {
@@ -172,5 +239,6 @@ func (r *FloppybirdReconciler) getListOfPods(ctx context.Context, req ctrl.Reque
 func (r *FloppybirdReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&webappv1alpha1.Floppybird{}).
+		Owns(&corev1.Pod{}).
 		Complete(r)
 }
