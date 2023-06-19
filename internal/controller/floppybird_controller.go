@@ -25,6 +25,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	webappv1alpha1 "github.com/viadee/floppybird-operator-demo/api/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // FloppybirdReconciler reconciles a Floppybird object
@@ -47,11 +49,77 @@ type FloppybirdReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.4/pkg/reconcile
 func (r *FloppybirdReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	logger := log.FromContext(ctx)
 
 	// TODO(user): your logic here
 
+	// get current state
+	var floppybird webappv1alpha1.Floppybird
+	if err := r.Client.Get(ctx, req.NamespacedName, &floppybird); err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+	logger.Info("Floppybird: " + floppybird.Name)
+
+	// define resource label
+	operatorResourceLabel := map[string]string{"floppybird-instance": floppybird.ObjectMeta.Name}
+
+	// get number of running pods
+	runningPods, err := r.getListOfPods(ctx, req, operatorResourceLabel)
+	if err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	// start new pod if no running pods are found
+	if runningPods <= 0 {
+		logger.Info("No running pods found. Creating new pod.")
+		newPod := r.createPod(floppybird, operatorResourceLabel)
+
+		// establish a controller reference between floppybird and pod
+		if err := ctrl.SetControllerReference(&floppybird, newPod, r.Scheme); err != nil {
+			return ctrl.Result{}, err
+		}
+
+		// create in cluster
+		if err := r.Create(ctx, newPod); err != nil {
+			// Error occurred while creating a new pod, return error
+			return ctrl.Result{}, err
+		}
+	} else {
+		logger.Info("Running pods found: " + string(runningPods))
+	}
+
 	return ctrl.Result{}, nil
+}
+
+func (r *FloppybirdReconciler) createPod(floppybird webappv1alpha1.Floppybird, labels map[string]string) *corev1.Pod {
+	// Customize the pod creation according to your requirements
+	newPod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      floppybird.Name + "-pod",
+			Namespace: floppybird.Namespace,
+			Labels:    labels,
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{{
+				Name:            floppybird.Name,
+				Image:           "crowdsalat/floppybird-demo:0.0.4",
+				ImagePullPolicy: "IfNotPresent",
+				Ports: []corev1.ContainerPort{
+					{ContainerPort: 80, Name: "http", Protocol: "TCP"},
+				},
+			}},
+		},
+	}
+	return newPod
+}
+
+func (r *FloppybirdReconciler) getListOfPods(ctx context.Context, req ctrl.Request, operatorResourceLabel map[string]string) (int32, error) {
+	podList := &corev1.PodList{}
+	if err := r.List(ctx, podList, client.InNamespace(req.Namespace), client.MatchingLabels(operatorResourceLabel)); err != nil {
+		return 0, err
+	}
+	runningPods := int32(len(podList.Items))
+	return runningPods, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
