@@ -29,7 +29,9 @@ type FloppybirdSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of Floppybird. Edit floppybird_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	Foo       string `json:"foo,omitempty"`
+	Subdomain string `json:"subdomain,omitempty"`
+	Distro    string `json:"distro,omitempty"`
 }
 
 // FloppybirdStatus defines the observed state of Floppybird

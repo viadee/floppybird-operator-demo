@@ -35,9 +35,13 @@ spec:
           spec:
             description: FloppybirdSpec defines the desired state of Floppybird
             properties:
+              distro:
+                type: string
               foo:
                 description: Foo is an example field of Floppybird. Edit floppybird_types.go
                   to remove/update
+                type: string
+              subdomain:
                 type: string
             type: object
           status:

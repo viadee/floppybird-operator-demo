@@ -1,0 +1,42 @@
+---
+apiVersion: webapp.demo.viadee.de/v1alpha1
+kind: Floppybird
+metadata:
+  labels:
+    app.kubernetes.io/name: floppybird
+    app.kubernetes.io/instance: flappydragon
+    app.kubernetes.io/part-of: floppybird-operator-demo
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: floppybird-operator-demo
+  name: flappydragon
+spec:
+  distro: flappydragon
+  subdomain: flappydragon
+---
+apiVersion: webapp.demo.viadee.de/v1alpha1
+kind: Floppybird
+metadata:
+  labels:
+    app.kubernetes.io/name: floppybird
+    app.kubernetes.io/instance: flappy-math-saga
+    app.kubernetes.io/part-of: floppybird-operator-demo
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: floppybird-operator-demo
+  name: flappy-math-saga
+spec:
+  distro: flappy-math-saga
+  subdomain: flappy-math-saga
+---
+apiVersion: webapp.demo.viadee.de/v1alpha1
+kind: Floppybird
+metadata:
+  labels:
+    app.kubernetes.io/name: floppybird
+    app.kubernetes.io/instance: flappy-docker
+    app.kubernetes.io/part-of: floppybird-operator-demo
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: floppybird-operator-demo
+  name: flappy-docker
+spec:
+  distro: flappy-docker
+  subdomain: flappy-docker

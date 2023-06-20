@@ -66,16 +66,16 @@ func (r *FloppybirdReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	logger.Info("Floppybird: " + floppybird.Name)
 
 	// define resource label
-	operatorResourceLabel := map[string]string{"floppybird-instance": floppybird.ObjectMeta.Name}
+	operatorResourceLabel := map[string]string{"floppybird-instance": req.NamespacedName.String()}
 
 	// get number of running pods
-	runningPods, err := r.getListOfPods(ctx, req, operatorResourceLabel)
+	runningPods, err := r.listPods(ctx, req, operatorResourceLabel)
 	if client.IgnoreNotFound(err) != nil {
 		return ctrl.Result{}, err
 	}
 
 	// start new pod if no running pods are found
-	if runningPods <= 0 {
+	if int32(len(runningPods.Items)) <= 0 {
 		logger.Info("No running pods found. Creating new pod.")
 		newPod := r.createPod(floppybird, operatorResourceLabel)
 
@@ -90,7 +90,7 @@ func (r *FloppybirdReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			return ctrl.Result{}, err
 		}
 	} else {
-		logger.Info("Running pods found: " + string(runningPods))
+		logger.Info("Running pods found: " + string(int32(len(runningPods.Items))))
 	}
 
 	// check if servie exsists
@@ -127,7 +127,7 @@ func (r *FloppybirdReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	// create new ingress if service does not exit
 	if ingress.Name == "" {
 		logger.Info("No ingress found. Creating new ingress.")
-		ingress := createIngress(req)
+		ingress := createIngress(floppybird, req)
 
 		// establish a controller reference between floppybird and service
 		if err := ctrl.SetControllerReference(&floppybird, ingress, r.Scheme); err != nil {
@@ -157,6 +157,12 @@ func (r *FloppybirdReconciler) createPod(floppybird webappv1alpha1.Floppybird, l
 				Name:            floppybird.Name,
 				Image:           "crowdsalat/floppybird-demo:0.0.4",
 				ImagePullPolicy: "IfNotPresent",
+				Env: []corev1.EnvVar{
+					{
+						Name:  "FLOPPY_DISTRO",
+						Value: floppybird.Spec.Distro,
+					},
+				},
 				Ports: []corev1.ContainerPort{
 					{ContainerPort: 8000, Name: "http", Protocol: "TCP"},
 				},
@@ -186,7 +192,7 @@ func createService(req ctrl.Request, label map[string]string) *corev1.Service {
 	return service
 }
 
-func createIngress(req ctrl.Request) *networkingv1.Ingress {
+func createIngress(floppybird webappv1alpha1.Floppybird, req ctrl.Request) *networkingv1.Ingress {
 	ingress := &networkingv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      req.Name,
@@ -195,7 +201,7 @@ func createIngress(req ctrl.Request) *networkingv1.Ingress {
 		Spec: networkingv1.IngressSpec{
 			Rules: []networkingv1.IngressRule{
 				{
-					Host: "floppybird.cloudland2023operator.viadee.cloud",
+					Host: floppybird.Spec.Subdomain + ".cloudland2023operator.viadee.cloud",
 					IngressRuleValue: networkingv1.IngressRuleValue{
 						HTTP: &networkingv1.HTTPIngressRuleValue{
 							Paths: []networkingv1.HTTPIngressPath{
@@ -229,13 +235,12 @@ func createIngress(req ctrl.Request) *networkingv1.Ingress {
 	return ingress
 }
 
-func (r *FloppybirdReconciler) getListOfPods(ctx context.Context, req ctrl.Request, operatorResourceLabel map[string]string) (int32, error) {
+func (r *FloppybirdReconciler) listPods(ctx context.Context, req ctrl.Request, operatorResourceLabel map[string]string) (*corev1.PodList, error) {
 	podList := &corev1.PodList{}
 	if err := r.List(ctx, podList, client.InNamespace(req.Namespace), client.MatchingLabels(operatorResourceLabel)); err != nil {
-		return 0, err
+		return podList, err
 	}
-	runningPods := int32(len(podList.Items))
-	return runningPods, nil
+	return podList, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
