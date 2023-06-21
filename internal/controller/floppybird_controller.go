@@ -66,7 +66,7 @@ func (r *FloppybirdReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	logger.Info("Floppybird: " + floppybird.Name)
 
 	// define resource label
-	operatorResourceLabel := map[string]string{"floppybird-instance": req.NamespacedName.String()}
+	operatorResourceLabel := map[string]string{"floppybirdInstance": req.Namespace + "-" + req.Name}
 
 	// get number of running pods
 	runningPods, err := r.listPods(ctx, req, operatorResourceLabel)
@@ -124,10 +124,13 @@ func (r *FloppybirdReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	if client.IgnoreNotFound(err) != nil {
 		return ctrl.Result{}, err
 	}
+
+	domain := floppybird.Spec.Subdomain + ".cloudland2023operator.viadee.cloud"
+
 	// create new ingress if service does not exit
-	if ingress.Name == "" {
+	if ingress.Name == "" || ingress.Spec.Rules[0].Host != domain {
 		logger.Info("No ingress found. Creating new ingress.")
-		ingress := createIngress(floppybird, req)
+		ingress := createIngress(floppybird, req, domain)
 
 		// establish a controller reference between floppybird and service
 		if err := ctrl.SetControllerReference(&floppybird, ingress, r.Scheme); err != nil {
@@ -191,8 +194,7 @@ func createService(req ctrl.Request, label map[string]string) *corev1.Service {
 	}
 	return service
 }
-
-func createIngress(floppybird webappv1alpha1.Floppybird, req ctrl.Request) *networkingv1.Ingress {
+func createIngress(floppybird webappv1alpha1.Floppybird, req ctrl.Request, domain string) *networkingv1.Ingress {
 	ingress := &networkingv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      req.Name,
@@ -201,7 +203,7 @@ func createIngress(floppybird webappv1alpha1.Floppybird, req ctrl.Request) *netw
 		Spec: networkingv1.IngressSpec{
 			Rules: []networkingv1.IngressRule{
 				{
-					Host: floppybird.Spec.Subdomain + ".cloudland2023operator.viadee.cloud",
+					Host: domain,
 					IngressRuleValue: networkingv1.IngressRuleValue{
 						HTTP: &networkingv1.HTTPIngressRuleValue{
 							Paths: []networkingv1.HTTPIngressPath{
@@ -225,7 +227,7 @@ func createIngress(floppybird webappv1alpha1.Floppybird, req ctrl.Request) *netw
 			TLS: []networkingv1.IngressTLS{
 				{
 					Hosts: []string{
-						"floppybird.cloudland2023operator.viadee.cloud",
+						"domain",
 					},
 					SecretName: "floppybird-cert-generatedby-cert-manager",
 				},
