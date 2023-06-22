@@ -9,6 +9,9 @@ metadata:
     app.kubernetes.io/created-by: floppybird-operator-demo
   name: floppybird-sample
 spec:
-  # TODO(user): Add fields here
+  # flappy-docker
+  # flappy-math-saga
+  # flappydragon
+  # floppybird
   distro: floppybird
   subdomain: floppybird

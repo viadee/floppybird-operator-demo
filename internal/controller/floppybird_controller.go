@@ -73,10 +73,23 @@ func (r *FloppybirdReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	if client.IgnoreNotFound(err) != nil {
 		return ctrl.Result{}, err
 	}
+	noPodRunning := int32(len(runningPods.Items)) <= 0
+
+	// delete old pod if floppybird.Spec.Distro is not correct
+	if !noPodRunning && runningPods.Items[0].Spec.Containers[0].Env[0].Value != floppybird.Spec.Distro {
+		// delete pod
+		logger.Info("Distro is not set to " + floppybird.Spec.Distro + ". Deleting pod.")
+		if err := r.Delete(ctx, &runningPods.Items[0]); err != nil {
+			return ctrl.Result{}, err
+		}
+		noPodRunning = true
+	}
 
 	// start new pod if no running pods are found
-	if int32(len(runningPods.Items)) <= 0 {
+	if noPodRunning {
 		logger.Info("No running pods found. Creating new pod.")
+
+		//create pod
 		newPod := r.createPod(floppybird, operatorResourceLabel)
 
 		// establish a controller reference between floppybird and pod
@@ -128,7 +141,8 @@ func (r *FloppybirdReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	domain := floppybird.Spec.Subdomain + ".cloudland2023operator.viadee.cloud"
 
 	// create new ingress if service does not exit
-	if ingress.Name == "" || ingress.Spec.Rules[0].Host != domain {
+	noInressFound := ingress.Name == ""
+	if noInressFound || ingress.Spec.Rules[0].Host != domain {
 		logger.Info("No ingress found. Creating new ingress.")
 		ingress := createIngress(floppybird, req, domain)
 
@@ -137,13 +151,18 @@ func (r *FloppybirdReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			return ctrl.Result{}, err
 		}
 
-		// create in cluster
-		if err := r.Create(ctx, ingress); err != nil {
-			// Error occurred while creating a new pod, return error
-			return ctrl.Result{}, err
+		if noInressFound {
+			// create in cluster
+			if err := r.Create(ctx, ingress); err != nil {
+				// Error occurred while creating a new pod, return error
+				return ctrl.Result{}, err
+			}
+		} else {
+			if err := r.Patch(ctx, ingress, client.Merge); err != nil {
+				return ctrl.Result{}, err
+			}
 		}
 	}
-
 	return ctrl.Result{}, nil
 }
 
